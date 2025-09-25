@@ -1,0 +1,14 @@
+<!-- $A.get("e.force:navigateToURL").setParams({"url": "/apex/AccountList"}).fire(); -->
+<apex:page standardController="Account" recordSetVar="accounts">
+    <apex:pageBlock title="Account List">
+      <ul>
+          <apex:repeat value="{!accounts}" var="a">
+              <li>
+                  <apex:outputLink value="/{!a.Id}">
+                      {!a.Name}
+                  </apex:outputLink>
+              </li>
+          </apex:repeat>
+      </ul>
+    </apex:pageBlock>
+</apex:page>
