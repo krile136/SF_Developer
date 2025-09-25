@@ -1,0 +1,4 @@
+<!-- $A.get("e.force:navigateToURL").setParams({"url": "/apex/ShowImage"}).fire(); -->
+<apex:page >
+  <apex:image url="{!URLFOR($Resource.vfimagetest, 'cats/kitten1.jpg')}"/>
+</apex:page>
