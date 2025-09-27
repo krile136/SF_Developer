@@ -1,5 +1,4 @@
-
-name: Deploy to Developer Org
+name: Deploy to Developer Org and Run Tests
 
 on:
   push:
@@ -33,6 +32,9 @@ jobs:
           --instance-url https://login.salesforce.com
           --alias developer
 
-      - name: Deploy to Developer Org
-        run: sf project deploy start --manifest manifest/package.xml --target-org developer
-
+      - name: Deploy to Developer Org and Run Local Tests
+        run: >
+          sf project deploy start
+          --manifest manifest/package.xml
+          --target-org developer
+          --test-level RunLocalTests
