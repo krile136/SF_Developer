@@ -1,3 +1,11 @@
+
+name: Deploy to Developer Org
+
+on:
+  push:
+    branches:
+      - main
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -27,3 +35,4 @@ jobs:
 
       - name: Deploy to Developer Org
         run: sf project deploy start --manifest manifest/package.xml --target-org developer
+
