@@ -1,0 +1,12 @@
+ActivationPlatformActvAttr
+ActivationPlatformField
+ActvPfrmDataConnectorS3
+ActvPlatformAdncIdentifier
+ActvPlatformFieldValue
+ActvPlatformOAuthConnector
+DataObjectSearchIndexConf
+ExperienceContainer
+MktDatalakeSrcKeyQualifier
+MlModelConnection
+MlModelSchema
+TagSet
