@@ -50,3 +50,4 @@ $RECYCLE.BIN/
 manifest/metadata.json
 manifest/retrieve.log
 manifest/blacklist.txt
+scratch-auth.json
