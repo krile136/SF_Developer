@@ -46,3 +46,8 @@ $RECYCLE.BIN/
 **/__pycache__/
 **/.venv/
 **/venv/
+
+manifest/metadata.json
+manifest/retrieve.log
+manifest/blacklist.txt
+scratch-auth.json

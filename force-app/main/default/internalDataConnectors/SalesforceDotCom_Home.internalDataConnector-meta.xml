@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<InternalDataConnector xmlns="http://soap.sforce.com/2006/04/metadata">
+    <alias>Home</alias>
+    <dataConnectionStatus>Connected</dataConnectionStatus>
+    <dataConnectorType>SalesforceDotCom</dataConnectorType>
+    <dataPlatform>Salesforce_Sales_and_Service_Cloud</dataPlatform>
+    <dataSourceTenant>SalesforceDotCom_Home</dataSourceTenant>
+    <externalRecordId>00DgL000000d1Vi</externalRecordId>
+    <masterLabel>Salesforce Connector EPIC OrgFarm Home</masterLabel>
+</InternalDataConnector>

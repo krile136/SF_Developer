@@ -1,13 +1,13 @@
 {
-  "orgName": "hiroyuki company",
+  "orgName": "DevOrg",
   "edition": "Developer",
-  "features": ["EnableSetPasswordInApi"],
+  "features": ["AuthorApex", "ExternalClientApps"],
   "settings": {
+    "quoteSetting": {
+      "enableQuote": true
+    },
     "lightningExperienceSettings": {
       "enableS1DesktopEnabled": true
-    },
-    "mobileSettings": {
-      "enableS1EncryptedStoragePref2": false
     }
   }
 }

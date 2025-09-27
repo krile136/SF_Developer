@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ExtlClntAppGlobalOauthSettings xmlns="http://soap.sforce.com/2006/04/metadata">
+    <callbackUrl>http://localhost:1717/OauthRedirect</callbackUrl>
+    <certificate>MIIDMDCCAhgCCQD+thukiWiFhTANBgkqhkiG9w0BAQsFADBaMQswCQYDVQQGEwJK
+UDEOMAwGA1UECAwFVG9reW8xFjAUBgNVBAMMDVNhbGVzZm9yY2VKV1QxIzAhBgkq
+hkiG9w0BCQEWFGtyaWxlMTM2Y21AZ21haWwuY29tMB4XDTI1MDkxNTA4NTgzOFoX
+DTI2MDkxNTA4NTgzOFowWjELMAkGA1UEBhMCSlAxDjAMBgNVBAgMBVRva3lvMRYw
+FAYDVQQDDA1TYWxlc2ZvcmNlSldUMSMwIQYJKoZIhvcNAQkBFhRrcmlsZTEzNmNt
+QGdtYWlsLmNvbTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAKE2YQM0
+qTrMOLM2ezJBdyyBrXIQoNoLMuKFB4e1n5u16S1rik0qXhjlRlxynTOsADjVgLfs
+R8MVrkzIYUsBP/vo+h5A6oX2tRThuSoi09dkYsJRTbLzDo+gaqgFOKc52JpJZ658
+xY90lv2GVUhEyJ9GmfT0sDCoKHAjNCr96nuDnVE2akPAXHKEehZnYiVzqh5OzHcW
+ZM9SV+Jy2JyhiWw4VpTqoQJUiSQ1hKzQdOPxdxIpQw361OuYSWfYMdIbVOxfcXcC
+kHQ1dYlw/nEs87NDOvYjhIXOqktowFRcOheRgWSNG/hXeyKCDF47sjs1+4yQLvRa
+ds+1gis6ySGTzfUCAwEAATANBgkqhkiG9w0BAQsFAAOCAQEARTthaP44KdM20wx6
+GSQHvwWCE/vFRflko+XBmFa965nV1+8aafJL2Vjsl3QnbHBmU5DutltS1opAbH/v
+h+ANE6z07gynuge2H+qJOESBFyF4wufzvTdVis1JFPOMKUZ0rdbfGjLj4laeXMXs
+wcVKqRw3xtcxC8PABPmcitTHUf88mkIeqVjumBtghQbNdsRjFq3UU8Ff4Xyw4O/b
+MEGxLCEeOqGtPgwVnpPaHeF7CDF6dMOttyY4KTkrYTZJNjanNC+rAp68RslF0jdu
+bFXN3Bzbv2gCiqYjP+7lxhhsdoeorB+YJdQ4NcQUbhIOaSsKCDZryfaILwD5+Wfe
+dxKZNg==</certificate>
+    <consumerKey>3MVG9dAEux2v1sLu0FXuZ6nHzTxWJDBQ05JrrIoZBbulfn2lWbhLiN9hljneZ7Ag6z4PlOBg._fnZ5sncMs_h</consumerKey>
+    <externalClientApplication>Docker_JWT_Login</externalClientApplication>
+    <isClientCredentialsFlowEnabled>false</isClientCredentialsFlowEnabled>
+    <isCodeCredFlowEnabled>false</isCodeCredFlowEnabled>
+    <isCodeCredPostOnly>false</isCodeCredPostOnly>
+    <isConsumerSecretOptional>false</isConsumerSecretOptional>
+    <isDeviceFlowEnabled>false</isDeviceFlowEnabled>
+    <isIntrospectAllTokens>false</isIntrospectAllTokens>
+    <isNamedUserJwtEnabled>false</isNamedUserJwtEnabled>
+    <isPkceRequired>true</isPkceRequired>
+    <isRefreshTokenRotationEnabled>false</isRefreshTokenRotationEnabled>
+    <isSecretRequiredForRefreshToken>true</isSecretRequiredForRefreshToken>
+    <isSecretRequiredForTokenExchange>true</isSecretRequiredForTokenExchange>
+    <isTokenExchangeEnabled>false</isTokenExchangeEnabled>
+    <label>Docker_JWT_Login_glbloauth</label>
+    <shouldRotateConsumerKey>false</shouldRotateConsumerKey>
+    <shouldRotateConsumerSecret>false</shouldRotateConsumerSecret>
+</ExtlClntAppGlobalOauthSettings>
