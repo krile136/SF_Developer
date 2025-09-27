@@ -1,17 +1,12 @@
-name: Deploy to Developer Org
-
-on:
-  push:
-    branches:
-      - main
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout source
+      - name: Checkout source and submodules
         uses: actions/checkout@v3
+        with:
+          submodules: 'recursive' # これがsubmoduleのコードを展開します
 
       - name: Install Salesforce CLI
         run: npm install --global @salesforce/cli
@@ -31,5 +26,4 @@ jobs:
           --alias developer
 
       - name: Deploy to Developer Org
-        run: sf project retrieve start --manifest manifest/package.xml --target-org developer
-
+        run: sf project deploy start --manifest manifest/package.xml --target-org developer
