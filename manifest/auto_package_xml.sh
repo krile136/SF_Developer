@@ -1,34 +1,63 @@
 #!/bin/bash
 # auto_package_xml_full.sh
-# Salesforce DX 用：metadata.json から package.xml を生成し、取得不可メタデータを自動除外して retrieve
+# Salesforce DX 用：metadata.json から package.xml / package_dev.xml を生成し、
+# 取得不可メタデータを自動除外して retrieve
 
-TARGET_ORG="developer"
 METADATA_JSON="metadata.json"
-MANIFEST_DIR="./manifest"
+MANIFEST_DIR="."
 PACKAGE_XML="$MANIFEST_DIR/package.xml"
+PACKAGE_DEV_XML="$MANIFEST_DIR/package_dev.xml"
 BLACKLIST="$MANIFEST_DIR/blacklist.txt"
+EXCLUDELIST="$MANIFEST_DIR/exclude.txt"
 
 mkdir -p $MANIFEST_DIR
 touch $BLACKLIST
+touch $EXCLUDELIST
 
 generate_package_xml() {
     echo "1. package.xml を生成中..."
+
     cat <<EOF > $PACKAGE_XML
 <?xml version="1.0" encoding="UTF-8"?>
 <Package xmlns="http://soap.sforce.com/2006/04/metadata">
 EOF
-    # ブラックリストを Bash 配列に読み込む
-    mapfile -t BLACKLIST_ARRAY < $BLACKLIST
 
-    # metadata.json から type を抽出し、ブラックリストを除外
-    jq -r --argjson bl "$(printf '%s\n' "${BLACKLIST_ARRAY[@]}" | jq -R . | jq -s .)" '
+    cat <<EOF > $PACKAGE_DEV_XML
+<?xml version="1.0" encoding="UTF-8"?>
+<Package xmlns="http://soap.sforce.com/2006/04/metadata">
+EOF
+
+    # ブラックリストと除外リストを Bash 配列に読み込む
+    mapfile -t BLACKLIST_ARRAY < $BLACKLIST
+    mapfile -t EXCLUDELIST_ARRAY < $EXCLUDELIST
+
+    # jq に渡す配列を作成
+    BL_JSON=$(printf '%s\n' "${BLACKLIST_ARRAY[@]}" | jq -R . | jq -s .)
+    EX_JSON=$(printf '%s\n' "${EXCLUDELIST_ARRAY[@]}" | jq -R . | jq -s .)
+
+    # metadata.json から type を抽出し、ブラックリストを除外 → package.xml
+    jq -r --argjson bl "$BL_JSON" '
         .result.metadataObjects[]
         | select(.xmlName != null)
         | select(.xmlName as $t | ($bl | index($t) | not))
         | "    <types>\n        <members>*</members>\n        <name>\(.xmlName)</name>\n    </types>"
-    ' $METADATA_JSON >> $PACKAGE_XML
+    ' "$METADATA_JSON" >> $PACKAGE_XML
+
+    # metadata.json から type を抽出し、ブラックリストと除外リストを除外 → package_dev.xml
+    jq -r --argjson bl "$BL_JSON" --argjson ex "$EX_JSON" '
+        .result.metadataObjects[]
+        | select(.xmlName != null)
+        | select(.xmlName as $t | ($bl | index($t) | not))
+        | select(.xmlName as $t | ($ex | index($t) | not))
+        | "    <types>\n        <members>*</members>\n        <name>\(.xmlName)</name>\n    </types>"
+    ' "$METADATA_JSON" >> $PACKAGE_DEV_XML
 
     cat <<EOF >> $PACKAGE_XML
+    <version>61.0</version>
+</Package>
+EOF
+
+    cat <<EOF >> $PACKAGE_DEV_XML
     <version>61.0</version>
 </Package>
 EOF
@@ -36,29 +65,28 @@ EOF
 
 retrieve_metadata() {
     echo "2. Salesforce DX retrieve 実行..."
-    sf project retrieve start --manifest $PACKAGE_XML --target-org $TARGET_ORG 2>&1 | tee $MANIFEST_DIR/retrieve.log
+    sf project retrieve start --manifest $PACKAGE_XML 2>&1 | tee $MANIFEST_DIR/retrieve.log
 }
 
 filter_errors() {
     echo "3. 取得エラーを解析..."
     CLEAN_LOG=$(sed 's/\x1b\[[0-9;]*[a-zA-Z]//g' "$MANIFEST_DIR/retrieve.log")
 
-    # registry に存在しないタイプを抽出
     NEW_ERRORS=$(echo "$CLEAN_LOG" | grep -oP "Missing metadata type definition in registry for id '\K[^']+" | sort -u || true)
 
     if [ -n "$NEW_ERRORS" ]; then
         echo "$NEW_ERRORS" >> $BLACKLIST
         sort -u -o $BLACKLIST $BLACKLIST
         echo "⚠ 新しいブラックリスト項目を追加: $NEW_ERRORS"
-        return 1  # 新規エラーあり
+        return 1
     else
-        return 0  # 新規エラーなし
+        return 0
     fi
 }
 
 # まず metadata.json を取得
 echo "0. metadata.json を取得..."
-sf force:mdapi:describemetadata --target-org $TARGET_ORG --json > $METADATA_JSON
+sf force:mdapi:describemetadata --json > $METADATA_JSON
 
 # 自動除外ループ
 MAX_RETRIES=20
@@ -77,5 +105,7 @@ done
 
 echo "==== 完了 ===="
 echo "package.xml: $PACKAGE_XML"
+echo "package_dev.xml: $PACKAGE_DEV_XML"
 echo "ブラックリスト: $BLACKLIST"
+echo "除外リスト: $EXCLUDELIST"
 
