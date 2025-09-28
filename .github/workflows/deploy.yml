@@ -1,40 +1,81 @@
-name: Deploy to Developer Org and Run Tests
+name: Deploy Changes to Staging and Prod Orgs
 
 on:
   push:
     branches:
-      - main
+      - main     # 本番環境 (Production)
+      - staging  # 検証環境 (Staging / UAT)
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
 
     steps:
+      # Gitの全履歴を取得する（差分比較のため）
       - name: Checkout source and submodules
         uses: actions/checkout@v3
         with:
+          fetch-depth: 0
           submodules: 'recursive'
 
-      - name: Install Salesforce CLI
-        run: npm install --global @salesforce/cli
+      - name: Install Salesforce CLI and git-delta plugin
+        run: |
+          npm install --global @salesforce/cli
+          sf plugins install salesforce-git-delta
 
       - name: Create JWT key file
         run: |
           mkdir -p assets
           echo "${{ secrets.SF_JWT_KEY }}" > assets/server.key
 
-      - name: Authenticate with JWT
+      # --- 環境ごとの認証 ---
+      - name: Authenticate to STAGING Org
+        if: github.ref_name == 'staging'
         run: >
           sf org login jwt
           --username ${{ secrets.SF_USERNAME }}
           --client-id ${{ secrets.SF_CLIENT_ID }}
           --jwt-key-file assets/server.key
-          --instance-url https://login.salesforce.com
-          --alias developer
+          --alias staging-org
 
-      - name: Deploy to Developer Org and Run Local Tests
+      - name: Authenticate to PROD Org
+        if: github.ref_name == 'main'
+        run: >
+          sf org login jwt
+          --username ${{ secrets.SF_USERNAME }}
+          --client-id ${{ secrets.SF_CLIENT_ID }}
+          --jwt-key-file assets/server.key
+          --alias prod-org
+      
+      # デプロイ用XML出力ディレクトリを事前に作成
+      - name: Create output directory
+        run: mkdir -p ./output
+
+      # 差分からデプロイ用パッケージを生成（コマンドを更新）
+      - name: Generate package from Git Diff
+        run: |
+          sf sgd source delta \
+            --to ${{ github.sha }} \
+            --from ${{ github.event.before }} \
+            --output-dir ./output
+
+      # --- 環境ごとのデプロイ ---
+      #  --test-level RunLocalTests を追加すればテストが行われる
+
+      - name: Deploy to STAGING Org
+        if: github.ref_name == 'staging'
         run: >
           sf project deploy start
-          --manifest manifest/package.xml
+          --manifest ./output/package.xml
+          --source-dir ./output
+          --post-destructive-changes ./output/destructiveChanges.xml
           --target-org developer
-          --test-level RunLocalTests
+
+      - name: Deploy to PROD Org
+        if: github.ref_name == 'main'
+        run: >
+          sf project deploy start
+          --manifest ./output/package.xml
+          --source-dir ./output
+          --post-destructive-changes ./output/destructiveChanges.xml
+          --target-org developer 
