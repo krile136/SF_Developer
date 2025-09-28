@@ -24,7 +24,7 @@ jobs:
 
       # ブランチ間差分xml自動生成用ツールをインストール
       - name: Install git-delta plugin
-        run: echo y | sf plugins install sfdx-git-delta
+        run: echo y | sf plugins install salesforce-git-delta
 
       - name: Create JWT key file
         run: |
