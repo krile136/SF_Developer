@@ -18,10 +18,13 @@ jobs:
           fetch-depth: 0
           submodules: 'recursive'
 
-      - name: Install Salesforce CLI and git-delta plugin
-        run: |
-          npm install --global @salesforce/cli
-          sf plugins install salesforce-git-delta
+      # salesforce CLI をインストール
+      - name: Install Salesforce CLI
+        run: npm install --global @salesforce/cli
+
+      # ブランチ間差分xml自動生成用ツールをインストール
+      - name: Install git-delta plugin
+        run: echo y | sf plugins install salesforce-git-delta
 
       - name: Create JWT key file
         run: |
