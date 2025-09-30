@@ -1,4 +1,3 @@
-
 name: Deploy to Developer Org and Run Tests
 
 on:
@@ -19,9 +18,6 @@ jobs:
 
       - name: Install Salesforce CLI
         run: npm install --global @salesforce/cli
-
-      - name: Install git-delta plugin
-        run: echo y | sf plugins install sfdx-git-delta
 
       - name: Create JWT key file
         run: |
@@ -91,13 +87,11 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout source code with full history
+      - name: Checkout source code
         uses: actions/checkout@v4
         with:
           # Actionsボットとしてpushするためにトークンを設定
           token: ${{ secrets.GITHUB_TOKEN }}
-          # 完全な履歴を取得する
-          fetch-depth: 0
 
       - name: Revert merge on failure
         run: |
@@ -108,4 +102,3 @@ jobs:
           # revertコミットのメッセージに [skip ci] を追加して、無限ループを防ぐ
           git commit --amend -m "$(git log -1 --pretty=%B) [skip ci]"
           git push
-
