@@ -19,12 +19,15 @@ jobs:
       - name: Install Salesforce CLI
         run: npm install --global @salesforce/cli
 
-      - name: Install git-delta plugin
-        run: sf plugins install sfdx-git-delta
+      # プラグインを事前に信頼済みホワイトリストに入れておく
+      - name: Trust sfdx-git-delta plugin
         run: |
           mkdir -p $HOME/.sf
           echo '{"sfdx-git-delta": "0.0.0"}' > $HOME/.sf/unsignedPluginAllowList.json
-  
+
+      - name: Install git-delta plugin
+        run: sf plugins install sfdx-git-delta
+     
       - name: Create JWT key file
         run: |
           mkdir -p assets
