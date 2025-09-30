@@ -33,6 +33,11 @@ jobs:
       # 差分からデプロイ用XML自動生成プラグインをインストール
       - name: Install git-delta plugin
         run: sf plugins install sfdx-git-delta
+      
+      # 後でデプロイ対象のクラス名を表示するxq コマンドを使えるようにする
+      - name: Install helper tools (yq for xml parsing)
+        run: |
+          pip install yq
      
       # 認証キーをSECRETから生成
       - name: Create JWT key file
