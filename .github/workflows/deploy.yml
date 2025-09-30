@@ -70,27 +70,46 @@ jobs:
             --from HEAD~1 \
             --output-dir ./output      
 
-      # 差分があるかをチェックする
-      - name: Check for changes to deploy
+      # 差分チェック及び出力
+       - name: Check for changes to deploy
         id: check_changes
         run: |
           ADD_CHANGES=false
           DELETE_CHANGES=false
+          echo "--- Checking for metadata changes ---"
+
           # 1. 追加・更新があるかチェック
           if [ -f "./output/package/package.xml" ] && grep -q '<types>' ./output/package/package.xml; then
             ADD_CHANGES=true
+            echo "✅ Found additions/updates."
+            echo "--- Added/Modified Components ---"
+            xq . < ./output/package/package.xml | jq -r '.Package.types | if type == "array" then .[] else . end | .name as $name | .members | if type == "array" then .[] else . end | "  - \($name): \(.)"'
+          else
+            echo "No additions/updates found."
           fi
+
           # 2. 削除があるかチェック
           if [ -f "./output/destructiveChange/destructiveChanges.xml" ] && grep -q '<types>' ./output/destructiveChange/destructiveChanges.xml; then
             DELETE_CHANGES=true
+            echo "✅ Found deletions."
+            echo "--- Deleted Components ---"
+            xq . < ./output/destructiveChange/destructiveChanges.xml | jq -r '.Package.types | if type == "array" then .[] else . end | .name as $name | .members | if type == "array" then .[] else . end | "  - \($name): \(.)"'
+          else
+            echo "No deletions found."
           fi
+          
           # 3. 結果を後続のステップで使えるように出力
+          echo "--- Setting outputs for next steps ---"
           echo "add_changes=$ADD_CHANGES" >> $GITHUB_OUTPUT
           echo "delete_changes=$DELETE_CHANGES" >> $GITHUB_OUTPUT
+          echo "Result: add_changes=$ADD_CHANGES, delete_changes=$DELETE_CHANGES"
+          
           if [ "$ADD_CHANGES" = true ] || [ "$DELETE_CHANGES" = true ]; then
             echo "changes_exist=true" >> $GITHUB_OUTPUT
+            echo "Conclusion: Changes exist, deployment will proceed."
           else
             echo "changes_exist=false" >> $GITHUB_OUTPUT
+            echo "Conclusion: No changes exist, deployment will be skipped."
           fi
 
       # 組織へのデプロイ開始
