@@ -1,90 +1,40 @@
-name: Deploy Changes to Staging and Prod Orgs
+name: Deploy to Developer Org and Run Tests
 
 on:
   push:
     branches:
-      - main     # 本番環境 (Production)
-      - staging  # 検証環境 (Staging / UAT)
+      - main
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-    # デプロイ失敗時にrevert PR作成のため、リポジトリへの書き込み権限を付与
-    permissions:
-      contents: write
 
     steps:
-      # Gitの全履歴を取得する（差分比較のため）
       - name: Checkout source and submodules
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
         with:
-          fetch-depth: 0
           submodules: 'recursive'
 
       - name: Install Salesforce CLI
         run: npm install --global @salesforce/cli
 
-      - name: Install git-delta plugin
-        run: sf plugins install sfdx-git-delta
+      - name: Create JWT key file
+        run: |
+          mkdir -p assets
+          echo "${{ secrets.SF_JWT_KEY }}" > assets/server.key
 
-      # ... (認証、パッケージ生成、デプロイのステップは変更なし) ...
-      - name: Authenticate to STAGING Org
-        if: github.ref_name == 'staging'
+      - name: Authenticate with JWT
         run: >
           sf org login jwt
           --username ${{ secrets.SF_USERNAME }}
           --client-id ${{ secrets.SF_CLIENT_ID }}
           --jwt-key-file assets/server.key
-          --alias deployOrg 
+          --instance-url https://login.salesforce.com
+          --alias developer
 
-      - name: Authenticate to PROD Org
-        if: github.ref_name == 'main'
-        run: >
-          sf org login jwt
-          --username ${{ secrets.SF_USERNAME }}
-          --client-id ${{ secrets.SF_CLIENT_ID }}
-          --jwt-key-file assets/server.key
-          --alias deployOrg 
-      
-      - name: Create output directory
-        run: mkdir -p ./output
-
-      - name: Generate package from Git Diff
-        run: |
-          sf sgd source delta \
-            --to ${{ github.sha }} \
-            --from ${{ github.event.before }} \
-            --output-dir ./output
-
-      - name: Check for changes to deploy
-        id: check_changes
-        run: |
-          if [ -f "./output/package.xml" ]; then
-            echo "changes_exist=true" >> $GITHUB_OUTPUT
-          else
-            echo "changes_exist=false" >> $GITHUB_OUTPUT
-          fi
-      
-      # デプロイの実行
-      # --test-level RunLocalTests
-      - name: Deploy to Org
-        if: steps.check_changes.outputs.changes_exist == 'true'
+      - name: Deploy to Developer Org and Run Local Tests
         run: >
           sf project deploy start
-          --manifest ./output/package.xml
-          --source-dir ./output
-          --post-destructive-changes ./output/destructiveChanges.xml
-          --target-org deployOrg 
-      
-      - name: No changes to deploy
-        if: steps.check_changes.outputs.changes_exist == 'false'
-        run: echo "No metadata changes detected. Skipping deployment."
-
-      # デプロイ失敗時にマージを自動で取り消す
-      - name: Revert merge on failure
-        if: failure() && steps.check_changes.outputs.changes_exist == 'true'
-        run: |
-          git config user.name "GitHub Actions"
-          git config user.email "actions@github.com"
-          git revert HEAD --no-edit
-          git push
+          --manifest manifest/package.xml
+          --target-org developer
+          --test-level RunLocalTests
