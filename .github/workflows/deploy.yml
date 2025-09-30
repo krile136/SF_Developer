@@ -15,6 +15,7 @@ jobs:
       - name: Checkout source and submodules
         uses: actions/checkout@v4
         with:
+          # 履歴を取得(差分XML作成に必要)
           fetch-depth: 0
           submodules: 'recursive'
 
@@ -110,7 +111,7 @@ jobs:
         with:
           # Actionsボットとしてpushするためにトークンを設定
           token: ${{ secrets.GITHUB_TOKEN }}
-          # 完全な履歴を取得
+          # 履歴を取得(revert PRを作るのに必要)
           fetch-depth: 0
 
       - name: Revert merge on failure
