@@ -6,6 +6,7 @@ on:
       - main
 
 jobs:
+  # === JOB 1: デプロイを実行するジョブ ===
   deploy:
     runs-on: ubuntu-latest
 
@@ -23,18 +24,81 @@ jobs:
           mkdir -p assets
           echo "${{ secrets.SF_JWT_KEY }}" > assets/server.key
 
-      - name: Authenticate with JWT
-        run: >
-          sf org login jwt
-          --username ${{ secrets.SF_USERNAME }}
-          --client-id ${{ secrets.SF_CLIENT_ID }}
-          --jwt-key-file assets/server.key
-          --instance-url https://login.salesforce.com
-          --alias developer
+      - name: Create JWT key file
+        run: |
+          mkdir -p assets
+          echo "${{ secrets.SF_JWT_KEY }}" > assets/server.key
 
-      - name: Deploy to Developer Org and Run Local Tests
+      - name: Authenticate to Org
+        run: |
+          USERNAME_SECRET=""
+          if [ "${{ github.ref_name }}" == "staging" ]; then
+            USERNAME_SECRET="${{ secrets.SF_USERNAME }}"
+          elif [ "${{ github.ref_name }}" == "main" ]; then
+            USERNAME_SECRET="${{ secrets.SF_USERNAME }}"
+          fi
+          sf org login jwt \
+            --username "$USERNAME_SECRET" \
+            --client-id ${{ secrets.SF_CLIENT_ID }} \
+            --jwt-key-file assets/server.key \
+            --alias deployOrg
+
+      - name: Create output directory
+        run: mkdir -p ./output
+
+      - name: Generate package from Git Diff
+        id: delta_generator
+        run: |
+          sf sgd source delta \
+            --to ${{ github.sha }} \
+            --from ${{ github.event.before }} \
+            --output-dir ./output
+      
+      - name: Check for changes to deploy
+        id: check_changes
+        run: |
+          if [ -f "./output/package.xml" ]; then
+            echo "changes_exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "changes_exist=false" >> $GITHUB_OUTPUT
+          fi
+
+      # テストする時に追加する --test-level RunLocalTests
+      - name: Deploy to Org
+        if: steps.check_changes.outputs.changes_exist == 'true'
         run: >
           sf project deploy start
-          --manifest manifest/package.xml
-          --target-org developer
-          --test-level RunLocalTests
+          --manifest ./output/package.xml
+          --source-dir ./output
+          --post-destructive-changes ./output/destructiveChanges.xml
+          --target-org deployOrg
+
+      - name: No changes to deploy
+        if: steps.check_changes.outputs.changes_exist == 'false'
+        run: echo "No metadata changes detected. Skipping deployment."
+
+  # JOB 2: デプロイが失敗した場合にのみ実行されるジョブ
+  revert_on_failure:
+    runs-on: ubuntu-latest
+    needs: deploy # deployジョブの完了を待つ
+    if: failure()  # deployジョブが失敗した場合にのみ、このジョブ全体を実行する
+
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+        with:
+          # Actionsボットとしてpushするためにトークンを設定
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Revert merge on failure
+        run: |
+          git config user.name "GitHub Actions"
+          git config user.email "actions@github.com"
+          # マージコミットをrevertするには -m 1 オプションが必須
+          git revert -m 1 HEAD --no-edit
+          # revertコミットのメッセージに [skip ci] を追加して、無限ループを防ぐ
+          git commit --amend -m "$(git log -1 --pretty=%B) [skip ci]"
+          git push
