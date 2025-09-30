@@ -1,3 +1,0 @@
-[submodule "force-app/main/default/classes/ApexEloquent"]
-	path = force-app/main/default/classes/ApexEloquent
-	url = https://github.com/krile136/ApexEloquent.git

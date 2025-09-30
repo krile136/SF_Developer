@@ -1,8 +1,0 @@
-ApexClass
-ApexTrigger
-LightningComponentBundle
-AuraDefinitionBundle
-ApexPage
-ApexComponent
-StaticResource
-
