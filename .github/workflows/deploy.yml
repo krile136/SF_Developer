@@ -67,7 +67,7 @@ jobs:
           # This compares the latest commit with its first parent
           sf sgd source delta \
             --to HEAD \
-            --from HEAD~1 \
+            --from HEAD~4 \
             --output-dir ./output      
 
       # 差分チェック及び出力
@@ -89,11 +89,11 @@ jobs:
           fi
 
           # 2. 削除があるかチェック
-          if [ -f "./output/destructiveChange/destructiveChanges.xml" ] && grep -q '<types>' ./output/destructiveChange/destructiveChanges.xml; then
+          if [ -f "./output/destructiveChanges/destructiveChanges.xml" ] && grep -q '<types>' ./output/destructiveChanges/destructiveChanges.xml; then
             DELETE_CHANGES=true
             echo "✅ Found deletions."
             echo "--- Deleted Components ---"
-            xq . < ./output/destructiveChange/destructiveChanges.xml | jq -r '.Package.types | if type == "array" then .[] else . end | .name as $name | .members | if type == "array" then .[] else . end | "  - \($name): \(.)"'
+            xq . < ./output/destructiveChanges/destructiveChanges.xml | jq -r '.Package.types | if type == "array" then .[] else . end | .name as $name | .members | if type == "array" then .[] else . end | "  - \($name): \(.)"'
           else
             echo "No deletions found."
           fi
@@ -121,7 +121,7 @@ jobs:
           echo "Deploying additions and deletions..."
           sf project deploy start \
             --manifest ./output/package/package.xml \
-            --post-destructive-changes ./output/destructiveChange/destructiveChanges.xml \
+            --post-destructive-changes ./output/destructiveChanges/destructiveChanges.xml \
             --target-org deployOrg
 
       - name: Deploy Additions/Updates Only
@@ -137,8 +137,8 @@ jobs:
         run: |
           echo "Deploying deletions only..."
           sf project deploy start \
-            --manifest ./output/destructiveChange/package.xml \
-            --post-destructive-changes ./output/destructiveChange/destructiveChanges.xml \
+            --manifest ./output/destructiveChanges/package.xml \
+            --post-destructive-changes ./output/destructiveChanges/destructiveChanges.xml \
             --target-org deployOrg
 
       # デプロイ対象がなかった時は処理終了
