@@ -19,6 +19,11 @@ jobs:
       - name: Install Salesforce CLI
         run: npm install --global @salesforce/cli
 
+      - name: Install git-delta plugin
+        run: sf plugins install sfdx-git-delta
+        env:
+          SF_TRUST_UNSIGNED_PLUGINS: true
+
       - name: Create JWT key file
         run: |
           mkdir -p assets
@@ -49,11 +54,13 @@ jobs:
       - name: Generate package from Git Diff
         id: delta_generator
         run: |
+          # Use HEAD~1 as the 'from' commit to be resilient to force-pushes
+          # This compares the latest commit with its first parent
           sf sgd source delta \
-            --to ${{ github.sha }} \
-            --from ${{ github.event.before }} \
-            --output-dir ./output
-      
+            --to HEAD \
+            --from HEAD~1 \
+            --output-dir ./output      
+
       - name: Check for changes to deploy
         id: check_changes
         run: |
@@ -92,6 +99,8 @@ jobs:
         with:
           # Actionsボットとしてpushするためにトークンを設定
           token: ${{ secrets.GITHUB_TOKEN }}
+          # 完全な履歴を取得
+          fetch-depth: 0
 
       - name: Revert merge on failure
         run: |
