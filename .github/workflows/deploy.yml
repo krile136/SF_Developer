@@ -74,21 +74,53 @@ jobs:
       - name: Check for changes to deploy
         id: check_changes
         run: |
-          if [ -f "./output/package/package.xml" ]; then
+          ADD_CHANGES=false
+          DELETE_CHANGES=false
+          # 1. 追加・更新があるかチェック
+          if [ -f "./output/package/package.xml" ] && grep -q '<types>' ./output/package/package.xml; then
+            ADD_CHANGES=true
+          fi
+          # 2. 削除があるかチェック
+          if [ -f "./output/destructiveChange/destructiveChanges.xml" ] && grep -q '<types>' ./output/destructiveChange/destructiveChanges.xml; then
+            DELETE_CHANGES=true
+          fi
+          # 3. 結果を後続のステップで使えるように出力
+          echo "add_changes=$ADD_CHANGES" >> $GITHUB_OUTPUT
+          echo "delete_changes=$DELETE_CHANGES" >> $GITHUB_OUTPUT
+          if [ "$ADD_CHANGES" = true ] || [ "$DELETE_CHANGES" = true ]; then
             echo "changes_exist=true" >> $GITHUB_OUTPUT
           else
             echo "changes_exist=false" >> $GITHUB_OUTPUT
           fi
 
       # 組織へのデプロイ開始
-      # テストする時に追加する --test-level RunLocalTests
-      - name: Deploy to Org
-        if: steps.check_changes.outputs.changes_exist == 'true'
-        run: >
-          sf project deploy start
-          --manifest ./output/package/package.xml
-          --post-destructive-changes ./output/destructiveChange/destructiveChanges.xml
-          --target-org deployOrg
+      # 3つのデプロイシナリオに応じてコマンドを分離
+      # --test-level RunLocalTests \
+      - name: Deploy Additions and Deletions
+        if: steps.check_changes.outputs.add_changes == 'true' && steps.check_changes.outputs.delete_changes == 'true'
+        run: |
+          echo "Deploying additions and deletions..."
+          sf project deploy start \
+            --manifest ./output/package/package.xml \
+            --post-destructive-changes ./output/destructiveChange/destructiveChanges.xml \
+            --target-org deployOrg
+
+      - name: Deploy Additions/Updates Only
+        if: steps.check_changes.outputs.add_changes == 'true' && steps.check_changes.outputs.delete_changes == 'false'
+        run: |
+          echo "Deploying additions/updates only..."
+          sf project deploy start \
+            --manifest ./output/package/package.xml \
+            --target-org deployOrg
+
+      - name: Deploy Deletions Only
+        if: steps.check_changes.outputs.delete_changes == 'true' && steps.check_changes.outputs.add_changes == 'false'
+        run: |
+          echo "Deploying deletions only..."
+          sf project deploy start \
+            --manifest ./output/destructiveChange/package.xml \
+            --post-destructive-changes ./output/destructiveChange/destructiveChanges.xml \
+            --target-org deployOrg
 
       # デプロイ対象がなかった時は処理終了
       - name: No changes to deploy
