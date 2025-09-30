@@ -72,7 +72,7 @@ jobs:
           # This compares the latest commit with its first parent
           sf sgd source delta \
             --to HEAD \
-            --from HEAD~4 \
+            --from HEAD~1 \
             --output-dir ./output      
 
       # 差分チェック及び出力
