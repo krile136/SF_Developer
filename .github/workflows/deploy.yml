@@ -86,9 +86,8 @@ jobs:
         if: steps.check_changes.outputs.changes_exist == 'true'
         run: >
           sf project deploy start
-          --manifest ./output/package.xml
-          --source-dir ./output
-          --post-destructive-changes ./output/destructiveChanges.xml
+          --manifest ./output/package/package.xml
+          --post-destructive-changes ./output/destructiveChange/destructiveChanges.xml
           --target-org deployOrg
 
       # デプロイ対象がなかった時は処理終了
