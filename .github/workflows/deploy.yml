@@ -71,7 +71,7 @@ jobs:
             --output-dir ./output      
 
       # 差分チェック及び出力
-       - name: Check for changes to deploy
+      - name: Check for changes to deploy
         id: check_changes
         run: |
           ADD_CHANGES=false
