@@ -67,7 +67,7 @@ jobs:
           # This compares the latest commit with its first parent
           sf sgd source delta \
             --to HEAD \
-            --from HEAD~2 \
+            --from HEAD~1 \
             --output-dir ./output      
 
       # 差分チェック及び出力
@@ -89,7 +89,7 @@ jobs:
           fi
 
           # 2. 削除があるかチェック
-          if [ -f "./output/destructiveChanges/destructiveChanges.xml" ] && grep -q '<types>' ./output/destructiveChanges/destructiveChanges.xml; then
+          if [ -f "./output/destructiveChange/destructiveChanges.xml" ] && grep -q '<types>' ./output/destructiveChange/destructiveChanges.xml; then
             DELETE_CHANGES=true
             echo "✅ Found deletions."
             echo "--- Deleted Components ---"
