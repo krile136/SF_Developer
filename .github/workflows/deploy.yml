@@ -10,34 +10,35 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
 
+    # ApexEloquentをsubModulesでインストールしているのでソースコードとして取得できるようにする
     steps:
       - name: Checkout source and submodules
         uses: actions/checkout@v3
         with:
           submodules: 'recursive'
 
+      # Salsforce CLI のインストール
       - name: Install Salesforce CLI
         run: npm install --global @salesforce/cli
 
       # プラグインを事前に信頼済みホワイトリストに入れておく
+      # 参考: https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_allowlist.htm
       - name: Trust sfdx-git-delta plugin
         run: |
-          mkdir -p $HOME/.sf
-          echo '{"sfdx-git-delta": "0.0.0"}' > $HOME/.sf/unsignedPluginAllowList.json
+          mkdir -p $HOME/.config/sf
+          echo '["sfdx-git-delta"]' > $HOME/.config/sf/unsignedPluginAllowList.json
 
+      # 差分からデプロイ用XML自動生成プラグインをインストール
       - name: Install git-delta plugin
         run: sf plugins install sfdx-git-delta
      
+      # 認証キーをSECRETから生成
       - name: Create JWT key file
         run: |
           mkdir -p assets
           echo "${{ secrets.SF_JWT_KEY }}" > assets/server.key
 
-      - name: Create JWT key file
-        run: |
-          mkdir -p assets
-          echo "${{ secrets.SF_JWT_KEY }}" > assets/server.key
-
+      # 組織への認証
       - name: Authenticate to Org
         run: |
           USERNAME_SECRET=""
@@ -52,9 +53,11 @@ jobs:
             --jwt-key-file assets/server.key \
             --alias deployOrg
 
+      # 差分のXMLを出力するディレクトリを作成
       - name: Create output directory
         run: mkdir -p ./output
 
+      # 差分のXMLを生成
       - name: Generate package from Git Diff
         id: delta_generator
         run: |
@@ -65,6 +68,7 @@ jobs:
             --from HEAD~1 \
             --output-dir ./output      
 
+      # 差分があるかをチェックする
       - name: Check for changes to deploy
         id: check_changes
         run: |
@@ -74,6 +78,7 @@ jobs:
             echo "changes_exist=false" >> $GITHUB_OUTPUT
           fi
 
+      # 組織へのデプロイ開始
       # テストする時に追加する --test-level RunLocalTests
       - name: Deploy to Org
         if: steps.check_changes.outputs.changes_exist == 'true'
@@ -84,6 +89,7 @@ jobs:
           --post-destructive-changes ./output/destructiveChanges.xml
           --target-org deployOrg
 
+      # デプロイ対象がなかった時は処理終了
       - name: No changes to deploy
         if: steps.check_changes.outputs.changes_exist == 'false'
         run: echo "No metadata changes detected. Skipping deployment."
